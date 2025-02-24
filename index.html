@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>수학 게임</title>
+  <style>
+    /* 기본 스타일 및 중앙 정렬 */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      text-align: center;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .hidden {
+      display: none;
+    }
+    /* 시작 화면 스타일 */
+    #startScreen input,
+    #startScreen select,
+    #startScreen button {
+      padding: 10px;
+      margin: 10px;
+      font-size: 16px;
+    }
+    /* 게임 화면 스타일 */
+    #gameScreen .status {
+      margin-top: 10px;
+      font-size: 18px;
+    }
+    .question-image {
+      max-width: 80%;
+      height: auto;
+      margin: 20px 0;
+    }
+    .answer-options button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .answer-options button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .text-answer {
+      padding: 10px;
+      font-size: 16px;
+      width: 200px;
+      margin-right: 10px;
+    }
+    #nextButton {
+      padding: 10px 20px;
+      margin-top: 20px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 시작 화면 -->
+    <div id="startScreen">
+      <h1>수학 게임</h1>
+      <input type="text" id="playerName" placeholder="이름을 입력하세요" />
+      <br>
+      <select id="difficulty">
+        <option value="최상">최상 (20초, 20점)</option>
+        <option value="상">상 (30초, 15점)</option>
+        <option value="중">중 (40초, 13점)</option>
+        <option value="하">하 (무제한, 10점)</option>
+      </select>
+      <br>
+      <button id="startButton">게임 시작</button>
+    </div>
+
+    <!-- 게임 화면 -->
+    <div id="gameScreen" class="hidden">
+      <div class="status">
+        <span id="playerDisplay"></span> | 점수: <span id="scoreDisplay">0</span> | 진행 시간: <span id="overallTime">0</span>초
+      </div>
+      <div class="status">
+        남은 기회: <span id="attemptsDisplay">3</span>
+        <span id="questionTimerDisplay"></span>
+      </div>
+      <div id="questionContainer">
+        <img id="questionImage" class="question-image" src="" alt="문제 이미지">
+      </div>
+      <div id="answerContainer">
+        <!-- 문제 유형에 따라 답 입력 요소가 동적으로 추가됩니다. -->
+      </div>
+      <button id="nextButton" disabled>다음문제</button>
+    </div>
+  </div>
+
+  <script>
+    function init() {
+      /***********************
+       * 1. 게임 데이터 및 변수 정의
+       ***********************/
+      const questions = [
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C1.jpg?raw=true",
+          type: "객관식",
+          answer: "1",
+          options: ["1", "2", "3", "4", "5"]
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C2.jpg?raw=true",
+          type: "객관식",
+          answer: "2",
+          options: ["1", "2", "3", "4", "5"]
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C3.jpg?raw=true",
+          type: "객관식",
+          answer: "2",
+          options: ["1", "2", "3", "4", "5"]
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C4.jpg?raw=true",
+          type: "객관식",
+          answer: "1",
+          options: ["1", "2", "3", "4", "5"]
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C5.jpg?raw=true",
+          type: "객관식",
+          answer: "1",
+          options: ["1", "2", "3", "4", "5"]
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C6.jpg?raw=true",
+          type: "객관식",
+          answer: "2",
+          options: ["1", "2", "3", "4", "5"]
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C7.jpg?raw=true",
+          type: "객관식",
+          answer: "2",
+          options: ["1", "2", "3", "4", "5"]
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C8.jpg?raw=true",
+          type: "객관식",
+          answer: "4",
+          options: ["1", "2", "3", "4", "5"]
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C9.jpg?raw=true",
+          type: "객관식",
+          answer: "5",
+          options: ["1", "2", "3", "4", "5"]
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C10.jpg?raw=true",
+          type: "객관식",
+          answer: "2",
+          options: ["1", "2", "3", "4", "5"]
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C11.jpg?raw=true",
+          type: "객관식",
+          answer: "3",
+          options: ["1", "2", "3", "4", "5"]
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C12.jpg?raw=true",
+          type: "객관식",
+          answer: "3",
+          options: ["1", "2", "3", "4", "5"]
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C13.jpg?raw=true",
+          type: "객관식",
+          answer: "2",
+          options: ["1", "2", "3", "4", "5"]
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C14.jpg?raw=true",
+          type: "객관식",
+          answer: "5",
+          options: ["1", "2", "3", "4", "5"]
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C15.jpg?raw=true",
+          type: "객관식",
+          answer: "1",
+          options: ["1", "2", "3", "4", "5"]
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C18.jpg?raw=true",
+          type: "주관식",
+          answer: "4a+2b"
+        },
+        {
+          image: "https://github.com/dr-youngjin/image-file/blob/main/%EA%B8%B0%EC%B6%9C%EC%9C%A0%EC%82%AC/%EB%AC%B8%EC%A0%9C19.jpg?raw=true",
+          type: "객관식",
+          answer: "32장",
+          options: ["11장", "27장", "30장", "32장", "41장"]
+        }
+      ];
+
+      // 난이도별 시간 제한 및 점수 배점 설정
+      const difficultySettings = {
+        "최상": { timeLimit: 20, scorePer: 20 },
+        "상": { timeLimit: 30, scorePer: 15 },
+        "중": { timeLimit: 40, scorePer: 13 },
+        "하": { timeLimit: null, scorePer: 10 }
+      };
+
+      let currentQuestionIndex = 0;
+      let score = 0;
+      let attemptsLeft = 3;
+      let overallTime = 0;
+      let overallTimerInterval;
+      let questionTimerInterval;
+      let questionTimeRemaining;
+      let selectedDifficulty;
+
+      // DOM 요소 캐싱
+      const startScreen = document.getElementById("startScreen");
+      const gameScreen = document.getElementById("gameScreen");
+      const startButton = document.getElementById("startButton");
+      const playerNameInput = document.getElementById("playerName");
+      const difficultySelect = document.getElementById("difficulty");
+      const playerDisplay = document.getElementById("playerDisplay");
+      const scoreDisplay = document.getElementById("scoreDisplay");
+      const overallTimeDisplay = document.getElementById("overallTime");
+      const attemptsDisplay = document.getElementById("attemptsDisplay");
+      const questionTimerDisplay = document.getElementById("questionTimerDisplay");
+      const questionImage = document.getElementById("questionImage");
+      const answerContainer = document.getElementById("answerContainer");
+      const nextButton = document.getElementById("nextButton");
+
+      /***********************
+       * 2. 게임 시작 및 문제 로딩, 타이머, 정답 확인 로직
+       ***********************/
+      // 게임 시작 버튼 클릭 시
+      startButton.addEventListener("click", () => {
+        const playerName = playerNameInput.value.trim();
+        if (!playerName) {
+          alert("이름을 입력하세요.");
+          return;
+        }
+        selectedDifficulty = difficultySelect.value;
+        playerDisplay.textContent = playerName + " (" + selectedDifficulty + ")";
+        startScreen.classList.add("hidden");
+        gameScreen.classList.remove("hidden");
+        startOverallTimer();
+        loadQuestion();
+      });
+
+      // 전체 진행 시간 타이머 (초 단위 증가)
+      function startOverallTimer() {
+        overallTimerInterval = setInterval(() => {
+          overallTime++;
+          overallTimeDisplay.textContent = overallTime;
+        }, 1000);
+      }
+
+      // 현재 문제 로딩 함수
+      function loadQuestion() {
+        clearInterval(questionTimerInterval);
+        attemptsLeft = 3;
+        attemptsDisplay.textContent = attemptsLeft;
+        nextButton.disabled = true;
+        answerContainer.innerHTML = "";
+        
+        const currentQuestion = questions[currentQuestionIndex];
+        questionImage.src = currentQuestion.image;
+        
+        // 난이도에 따른 문제 타이머 설정 (하: 무제한)
+        const timeLimit = difficultySettings[selectedDifficulty].timeLimit;
+        if (timeLimit !== null) {
+          questionTimeRemaining = timeLimit;
+          questionTimerDisplay.textContent = " | 남은 시간: " + questionTimeRemaining + "초";
+          questionTimerInterval = setInterval(() => {
+            questionTimeRemaining--;
+            questionTimerDisplay.textContent = " | 남은 시간: " + questionTimeRemaining + "초";
+            if (questionTimeRemaining <= 0) {
+              clearInterval(questionTimerInterval);
+              showCorrectAnswer("시간 초과! 정답: " + currentQuestion.answer);
+            }
+          }, 1000);
+        } else {
+          questionTimerDisplay.textContent = "";
+        }
+
+        // 문제 유형에 따른 답 입력 요소 생성
+        if (currentQuestion.type === "객관식") {
+          const options = currentQuestion.options || ["1", "2", "3", "4", "5"];
+          const optionsDiv = document.createElement("div");
+          optionsDiv.className = "answer-options";
+          options.forEach(option => {
+            const btn = document.createElement("button");
+            btn.textContent = option;
+            btn.addEventListener("click", () => checkAnswer(option));
+            optionsDiv.appendChild(btn);
+          });
+          answerContainer.appendChild(optionsDiv);
+        } else if (currentQuestion.type === "주관식") {
+          const input = document.createElement("input");
+          input.type = "text";
+          input.className = "text-answer";
+          input.id = "textAnswer";
+          const confirmBtn = document.createElement("button");
+          confirmBtn.textContent = "확인";
+          confirmBtn.addEventListener("click", () => {
+            const userAnswer = document.getElementById("textAnswer").value.trim();
+            checkAnswer(userAnswer);
+          });
+          answerContainer.appendChild(input);
+          answerContainer.appendChild(confirmBtn);
+        }
+      }
+
+      // 정답 확인 함수
+      function checkAnswer(userAnswer) {
+        const currentQuestion = questions[currentQuestionIndex];
+        if (userAnswer === currentQuestion.answer) {
+          updateScore();
+          clearInterval(questionTimerInterval);
+          disableAnswerInputs();
+          nextButton.disabled = false;
+        } else {
+          attemptsLeft--;
+          attemptsDisplay.textContent = attemptsLeft;
+          if (attemptsLeft <= 0) {
+            clearInterval(questionTimerInterval);
+            showCorrectAnswer("정답: " + currentQuestion.answer);
+          }
+        }
+      }
+
+      // 난이도에 따른 점수 추가
+      function updateScore() {
+        const scoreIncrement = difficultySettings[selectedDifficulty].scorePer;
+        score += scoreIncrement;
+        scoreDisplay.textContent = score;
+      }
+
+      // 답 입력란(버튼/텍스트)의 비활성화 처리
+      function disableAnswerInputs() {
+        const buttons = answerContainer.querySelectorAll("button");
+        buttons.forEach(btn => {
+          btn.disabled = true;
+        });
+        const input = document.getElementById("textAnswer");
+        if (input) {
+          input.disabled = true;
+        }
+      }
+
+      // 기회 소진 또는 타이머 종료 시 정답 표시 후 다음 문제 버튼 활성화
+      function showCorrectAnswer(message) {
+        disableAnswerInputs();
+        alert(message);
+        nextButton.disabled = false;
+      }
+
+      // 다음 문제 버튼 클릭 시
+      nextButton.addEventListener("click", () => {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+          loadQuestion();
+        } else {
+          endGame();
+        }
+      });
+
+      // 게임 종료 처리 (최종 점수 표시)
+      function endGame() {
+        clearInterval(overallTimerInterval);
+        alert("게임 종료! 최종 점수: " + score);
+      }
+    }
+
+    // DOM이 이미 로드되었으면 바로 init, 아니면 DOMContentLoaded 이벤트에서 init 호출
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>
